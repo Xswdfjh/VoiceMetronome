@@ -55,8 +55,8 @@ jobs:
         EOF
 
         cat << 'EOF' > gradle.properties
-        android.useAndroidX=true
-        android.enableJetifier=true
+        android.useAndroidX=false
+        android.enableJetifier=false
         org.gradle.jvmargs=-Xmx2048m
         EOF
 
@@ -66,7 +66,7 @@ jobs:
         }
         android {
             namespace 'com.example.voicemetronome'
-            compileSdk 33
+            compileSdk 28
             defaultConfig {
                 applicationId "com.example.voicemetronome"
                 minSdk 18
@@ -80,13 +80,6 @@ jobs:
                     proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
                 }
             }
-            compileOptions {
-                sourceCompatibility JavaVersion.VERSION_1_7
-                targetCompatibility JavaVersion.VERSION_1_7
-            }
-        }
-        dependencies {
-            implementation 'androidx.appcompat:appcompat:1.2.0'
         }
         EOF
 
@@ -99,7 +92,7 @@ jobs:
                 android:allowBackup="true"
                 android:icon="@drawable/ic_launcher"
                 android:label="中文节拍器"
-                android:theme="@style/Theme.AppCompat.NoActionBar">
+                android:theme="@android:style/Theme.Holo.NoActionBar">
                 <activity
                     android:name=".MainActivity"
                     android:exported="true"
@@ -155,12 +148,12 @@ jobs:
         cat << 'EOF' > app/src/main/java/com/example/voicemetronome/MainActivity.java
         package com.example.voicemetronome;
 
-        import android.media.AudioAttributes;
+        import android.app.Activity;
+        import android.media.AudioManager;
         import android.media.SoundPool;
         import android.os.Build;
         import android.os.Bundle;
         import android.os.Handler;
-        import android.os.Looper;
         import android.speech.tts.TextToSpeech;
         import android.speech.tts.UtteranceProgressListener;
         import android.view.View;
@@ -169,13 +162,11 @@ jobs:
         import android.widget.TextView;
         import android.widget.Toast;
 
-        import androidx.appcompat.app.AppCompatActivity;
-
         import java.io.File;
         import java.util.HashMap;
         import java.util.Locale;
 
-        public class MainActivity extends AppCompatActivity {
+        public class MainActivity extends Activity {
 
             private TextToSpeech tts;
             private SoundPool soundPool;
@@ -188,7 +179,7 @@ jobs:
             private int beatsPerBar = 4;
             private int currentBeat = 0;
 
-            private final Handler handler = new Handler(Looper.getMainLooper());
+            private final Handler handler = new Handler();
             private Runnable beatRunnable;
 
             private TextView tvBpm, tvBeat, tvStatus;
@@ -202,15 +193,15 @@ jobs:
                 setContentView(R.layout.activity_main);
                 getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-                tvBpm = findViewById(R.id.tv_bpm);
-                tvBeat = findViewById(R.id.tv_beat);
-                tvStatus = findViewById(R.id.tv_status);
-                btnStartStop = findViewById(R.id.btn_start_stop);
-                btnBpmUp = findViewById(R.id.btn_bpm_up);
-                btnBpmDown = findViewById(R.id.btn_bpm_down);
-                btn2 = findViewById(R.id.btn_2);
-                btn3 = findViewById(R.id.btn_3);
-                btn4 = findViewById(R.id.btn_4);
+                tvBpm = (TextView) findViewById(R.id.tv_bpm);
+                tvBeat = (TextView) findViewById(R.id.tv_beat);
+                tvStatus = (TextView) findViewById(R.id.tv_status);
+                btnStartStop = (Button) findViewById(R.id.btn_start_stop);
+                btnBpmUp = (Button) findViewById(R.id.btn_bpm_up);
+                btnBpmDown = (Button) findViewById(R.id.btn_bpm_down);
+                btn2 = (Button) findViewById(R.id.btn_2);
+                btn3 = (Button) findViewById(R.id.btn_3);
+                btn4 = (Button) findViewById(R.id.btn_4);
 
                 ttsDir = new File(getCacheDir(), "tts");
                 if (!ttsDir.exists()) ttsDir.mkdirs();
@@ -242,52 +233,56 @@ jobs:
             }
 
             private void initTts() {
-                tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
-                    public void onInit(int status) {
-                        if (status == TextToSpeech.SUCCESS) {
-                            int result = tts.setLanguage(Locale.CHINA);
-                            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                                Toast.makeText(MainActivity.this, "系统缺少中文语音引擎，请安装中文TTS", Toast.LENGTH_LONG).show();
-                                tvStatus.setText("缺少中文TTS");
-                                return;
+                try {
+                    tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
+                        public void onInit(int status) {
+                            if (status == TextToSpeech.SUCCESS) {
+                                int result = tts.setLanguage(Locale.CHINA);
+                                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                                    Toast.makeText(MainActivity.this, "系统缺少中文语音引擎，请安装中文TTS", Toast.LENGTH_LONG).show();
+                                    tvStatus.setText("缺少中文TTS");
+                                    return;
+                                }
+                                ttsReady = true;
+                                synthesizeNumbers();
+                            } else {
+                                tvStatus.setText("TTS初始化失败");
                             }
-                            ttsReady = true;
-                            synthesizeNumbers();
-                        } else {
-                            Toast.makeText(MainActivity.this, "TTS初始化失败", Toast.LENGTH_LONG).show();
-                            tvStatus.setText("TTS初始化失败");
                         }
-                    }
-                });
+                    });
+                } catch (Exception e) {
+                    tvStatus.setText("TTS初始化异常");
+                }
             }
 
             private void initSoundPool() {
-                AudioAttributes attrs = new AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .build();
-                soundPool = new SoundPool.Builder()
-                        .setMaxStreams(4)
-                        .setAudioAttributes(attrs)
-                        .build();
+                try {
+                    soundPool = new SoundPool(4, AudioManager.STREAM_MUSIC, 0);
+                } catch (Exception e) {
+                    tvStatus.setText("音频初始化失败");
+                }
             }
 
             private void synthesizeNumbers() {
                 String[] nums = {"一", "二", "三", "四"};
-                for (int i = 0; i < 4; i++) {
-                    File f = new File(ttsDir, "num" + i + ".wav");
-                    if (f.exists()) {
-                        loadSound(i, f);
-                        continue;
+                try {
+                    for (int i = 0; i < 4; i++) {
+                        File f = new File(ttsDir, "num" + i + ".wav");
+                        if (f.exists()) {
+                            loadSound(i, f);
+                            continue;
+                        }
+                        String utteranceId = "tts_" + i;
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            tts.synthesizeToFile(nums[i], null, f, utteranceId);
+                        } else {
+                            HashMap<String, String> params = new HashMap<String, String>();
+                            params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, utteranceId);
+                            tts.synthesizeToFile(nums[i], params, f.getAbsolutePath());
+                        }
                     }
-                    String utteranceId = "tts_" + i;
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                        tts.synthesizeToFile(nums[i], null, f, utteranceId);
-                    } else {
-                        HashMap<String, String> params = new HashMap<>();
-                        params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, utteranceId);
-                        tts.synthesizeToFile(nums[i], params, f.getAbsolutePath());
-                    }
+                } catch (Exception e) {
+                    tvStatus.setText("合成语音失败");
                 }
 
                 tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
@@ -314,7 +309,7 @@ jobs:
             }
 
             private void loadSound(int index, File f) {
-                if (f.exists()) {
+                if (f.exists() && soundPool != null) {
                     soundIds[index] = soundPool.load(f.getAbsolutePath(), 1);
                     soundPool.setOnLoadCompleteListener(new SoundPool.OnLoadCompleteListener() {
                         public void onLoadComplete(SoundPool pool, int sampleId, int status) {
@@ -363,7 +358,7 @@ jobs:
                 if (!isPlaying) return;
 
                 int beatToPlay = currentBeat;
-                if (soundIds[beatToPlay] != 0) {
+                if (soundPool != null && soundIds[beatToPlay] != 0) {
                     soundPool.play(soundIds[beatToPlay], 1.0f, 1.0f, 1, 0, 1.0f);
                 }
                 tvBeat.setText(String.valueOf(beatToPlay + 1));
