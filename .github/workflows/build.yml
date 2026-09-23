@@ -70,7 +70,7 @@ jobs:
             defaultConfig {
                 applicationId "com.example.voicemetronome"
                 minSdk 18
-                targetSdk 33
+                targetSdk 28
                 versionCode 1
                 versionName "1.0"
             }
@@ -81,12 +81,12 @@ jobs:
                 }
             }
             compileOptions {
-                sourceCompatibility JavaVersion.VERSION_1_8
-                targetCompatibility JavaVersion.VERSION_1_8
+                sourceCompatibility JavaVersion.VERSION_1_7
+                targetCompatibility JavaVersion.VERSION_1_7
             }
         }
         dependencies {
-            implementation 'androidx.appcompat:appcompat:1.6.1'
+            implementation 'androidx.appcompat:appcompat:1.2.0'
         }
         EOF
 
@@ -121,10 +121,8 @@ jobs:
 
         cat << 'EOF' > app/src/main/res/drawable/ic_launcher.xml
         <vector xmlns:android="http://schemas.android.com/apk/res/android"
-            android:width="48dp"
-            android:height="48dp"
-            android:viewportWidth="48"
-            android:viewportHeight="48">
+            android:width="48dp" android:height="48dp"
+            android:viewportWidth="48" android:viewportHeight="48">
             <path android:fillColor="#4CAF50" android:pathData="M0,0h48v48h-48z"/>
             <path android:fillColor="#FFFFFF" android:pathData="M22,12h4v24h-4z"/>
             <path android:fillColor="#FFFFFF" android:pathData="M14,20h4v16h-4z"/>
@@ -135,98 +133,22 @@ jobs:
         cat << 'EOF' > app/src/main/res/layout/activity_main.xml
         <?xml version="1.0" encoding="utf-8"?>
         <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:padding="16dp"
-            android:background="#1A1A1A">
-            <TextView
-                android:id="@+id/tv_status"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="#888888"
-                android:textSize="14sp"
-                android:text="正在初始化语音..." />
-            <TextView
-                android:id="@+id/tv_beat"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="#FFFFFF"
-                android:textSize="96sp"
-                android:textStyle="bold"
-                android:layout_marginTop="16dp"
-                android:text="-" />
-            <TextView
-                android:id="@+id/tv_bpm"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="#CCCCCC"
-                android:textSize="24sp"
-                android:layout_marginTop="8dp"
-                android:text="速度: 80 BPM" />
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center"
-                android:layout_marginTop="16dp">
-                <Button
-                    android:id="@+id/btn_bpm_down"
-                    android:layout_width="0dp"
-                    android:layout_height="64dp"
-                    android:layout_weight="1"
-                    android:text="-"
-                    android:textSize="24sp"
-                    android:layout_marginEnd="8dp" />
-                <Button
-                    android:id="@+id/btn_bpm_up"
-                    android:layout_width="0dp"
-                    android:layout_height="64dp"
-                    android:layout_weight="1"
-                    android:text="+"
-                    android:textSize="24sp"
-                    android:layout_marginStart="8dp" />
+            android:layout_width="match_parent" android:layout_height="match_parent"
+            android:orientation="vertical" android:gravity="center"
+            android:padding="16dp" android:background="#1A1A1A">
+            <TextView android:id="@+id/tv_status" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#888888" android:textSize="14sp" android:text="正在初始化语音..." />
+            <TextView android:id="@+id/tv_beat" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="96sp" android:textStyle="bold" android:layout_marginTop="16dp" android:text="-" />
+            <TextView android:id="@+id/tv_bpm" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CCCCCC" android:textSize="24sp" android:layout_marginTop="8dp" android:text="速度: 80 BPM" />
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center" android:layout_marginTop="16dp">
+                <Button android:id="@+id/btn_bpm_down" android:layout_width="0dp" android:layout_height="64dp" android:layout_weight="1" android:text="-" android:textSize="24sp" android:layout_marginEnd="8dp" />
+                <Button android:id="@+id/btn_bpm_up" android:layout_width="0dp" android:layout_height="64dp" android:layout_weight="1" android:text="+" android:textSize="24sp" android:layout_marginStart="8dp" />
             </LinearLayout>
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center"
-                android:layout_marginTop="16dp">
-                <Button
-                    android:id="@+id/btn_2"
-                    android:layout_width="0dp"
-                    android:layout_height="56dp"
-                    android:layout_weight="1"
-                    android:text="2/4"
-                    android:textSize="18sp"
-                    android:layout_marginEnd="6dp" />
-                <Button
-                    android:id="@+id/btn_3"
-                    android:layout_width="0dp"
-                    android:layout_height="56dp"
-                    android:layout_weight="1"
-                    android:text="3/4"
-                    android:textSize="18sp"
-                    android:layout_marginStart="6dp"
-                    android:layout_marginEnd="6dp" />
-                <Button
-                    android:id="@+id/btn_4"
-                    android:layout_width="0dp"
-                    android:layout_height="56dp"
-                    android:layout_weight="1"
-                    android:text="4/4"
-                    android:textSize="18sp"
-                    android:layout_marginStart="6dp" />
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center" android:layout_marginTop="16dp">
+                <Button android:id="@+id/btn_2" android:layout_width="0dp" android:layout_height="56dp" android:layout_weight="1" android:text="2/4" android:textSize="18sp" android:layout_marginEnd="6dp" />
+                <Button android:id="@+id/btn_3" android:layout_width="0dp" android:layout_height="56dp" android:layout_weight="1" android:text="3/4" android:textSize="18sp" android:layout_marginStart="6dp" android:layout_marginEnd="6dp" />
+                <Button android:id="@+id/btn_4" android:layout_width="0dp" android:layout_height="56dp" android:layout_weight="1" android:text="4/4" android:textSize="18sp" android:layout_marginStart="6dp" />
             </LinearLayout>
-            <Button
-                android:id="@+id/btn_start_stop"
-                android:layout_width="match_parent"
-                android:layout_height="80dp"
-                android:layout_marginTop="24dp"
-                android:text="开始"
-                android:textSize="28sp" />
+            <Button android:id="@+id/btn_start_stop" android:layout_width="match_parent" android:layout_height="80dp" android:layout_marginTop="24dp" android:text="开始" android:textSize="28sp" />
         </LinearLayout>
         EOF
 
@@ -241,6 +163,7 @@ jobs:
         import android.os.Looper;
         import android.speech.tts.TextToSpeech;
         import android.speech.tts.UtteranceProgressListener;
+        import android.view.View;
         import android.view.WindowManager;
         import android.widget.Button;
         import android.widget.TextView;
@@ -295,31 +218,45 @@ jobs:
                 initTts();
                 initSoundPool();
 
-                btnStartStop.setOnClickListener(v -> togglePlay());
-                btnBpmUp.setOnClickListener(v -> { if (bpm < 208) { bpm++; updateUI(); } });
-                btnBpmDown.setOnClickListener(v -> { if (bpm > 40) { bpm--; updateUI(); } });
-                btn2.setOnClickListener(v -> setBeats(2));
-                btn3.setOnClickListener(v -> setBeats(3));
-                btn4.setOnClickListener(v -> setBeats(4));
+                btnStartStop.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(View v) { togglePlay(); }
+                });
+                btnBpmUp.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(View v) { if (bpm < 208) { bpm++; updateUI(); } }
+                });
+                btnBpmDown.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(View v) { if (bpm > 40) { bpm--; updateUI(); } }
+                });
+                btn2.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(View v) { setBeats(2); }
+                });
+                btn3.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(View v) { setBeats(3); }
+                });
+                btn4.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(View v) { setBeats(4); }
+                });
 
                 updateUI();
                 tvStatus.setText("正在初始化语音...");
             }
 
             private void initTts() {
-                tts = new TextToSpeech(this, status -> {
-                    if (status == TextToSpeech.SUCCESS) {
-                        int result = tts.setLanguage(Locale.CHINA);
-                        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                            Toast.makeText(this, "系统缺少中文语音引擎，请安装中文TTS", Toast.LENGTH_LONG).show();
-                            tvStatus.setText("缺少中文TTS");
-                            return;
+                tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
+                    public void onInit(int status) {
+                        if (status == TextToSpeech.SUCCESS) {
+                            int result = tts.setLanguage(Locale.CHINA);
+                            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                                Toast.makeText(MainActivity.this, "系统缺少中文语音引擎，请安装中文TTS", Toast.LENGTH_LONG).show();
+                                tvStatus.setText("缺少中文TTS");
+                                return;
+                            }
+                            ttsReady = true;
+                            synthesizeNumbers();
+                        } else {
+                            Toast.makeText(MainActivity.this, "TTS初始化失败", Toast.LENGTH_LONG).show();
+                            tvStatus.setText("TTS初始化失败");
                         }
-                        ttsReady = true;
-                        synthesizeNumbers();
-                    } else {
-                        Toast.makeText(this, "TTS初始化失败", Toast.LENGTH_LONG).show();
-                        tvStatus.setText("TTS初始化失败");
                     }
                 });
             }
@@ -360,14 +297,18 @@ jobs:
                     @Override
                     public void onDone(String utteranceId) {
                         if (utteranceId == null || !utteranceId.startsWith("tts_")) return;
-                        int index = Integer.parseInt(utteranceId.replace("tts_", ""));
-                        File f = new File(ttsDir, "num" + index + ".wav");
-                        runOnUiThread(() -> loadSound(index, f));
+                        final int index = Integer.parseInt(utteranceId.replace("tts_", ""));
+                        final File f = new File(ttsDir, "num" + index + ".wav");
+                        runOnUiThread(new Runnable() {
+                            public void run() { loadSound(index, f); }
+                        });
                     }
 
                     @Override
                     public void onError(String utteranceId) {
-                        runOnUiThread(() -> tvStatus.setText("语音合成失败"));
+                        runOnUiThread(new Runnable() {
+                            public void run() { tvStatus.setText("语音合成失败"); }
+                        });
                     }
                 });
             }
@@ -375,10 +316,14 @@ jobs:
             private void loadSound(int index, File f) {
                 if (f.exists()) {
                     soundIds[index] = soundPool.load(f.getAbsolutePath(), 1);
-                    soundPool.setOnLoadCompleteListener((pool, sampleId, status) -> {
-                        if (status == 0) {
-                            soundReady = true;
-                            runOnUiThread(() -> tvStatus.setText("就绪"));
+                    soundPool.setOnLoadCompleteListener(new SoundPool.OnLoadCompleteListener() {
+                        public void onLoadComplete(SoundPool pool, int sampleId, int status) {
+                            if (status == 0) {
+                                soundReady = true;
+                                runOnUiThread(new Runnable() {
+                                    public void run() { tvStatus.setText("就绪"); }
+                                });
+                            }
                         }
                     });
                 }
@@ -391,11 +336,7 @@ jobs:
             }
 
             private void togglePlay() {
-                if (isPlaying) {
-                    stopMetronome();
-                } else {
-                    startMetronome();
-                }
+                if (isPlaying) { stopMetronome(); } else { startMetronome(); }
             }
 
             private void startMetronome() {
@@ -430,7 +371,9 @@ jobs:
                 currentBeat = (currentBeat + 1) % beatsPerBar;
 
                 long interval = 60000L / bpm;
-                beatRunnable = this::scheduleBeat;
+                beatRunnable = new Runnable() {
+                    public void run() { scheduleBeat(); }
+                };
                 handler.postDelayed(beatRunnable, interval);
             }
 
@@ -445,13 +388,8 @@ jobs:
             @Override
             protected void onDestroy() {
                 super.onDestroy();
-                if (tts != null) {
-                    tts.stop();
-                    tts.shutdown();
-                }
-                if (soundPool != null) {
-                    soundPool.release();
-                }
+                if (tts != null) { tts.stop(); tts.shutdown(); }
+                if (soundPool != null) { soundPool.release(); }
                 handler.removeCallbacksAndMessages(null);
             }
         }
