@@ -1,0 +1,467 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        gradle-version: 7.5
+
+    - name: Generate Project Files
+      run: |
+        mkdir -p app/src/main/java/com/example/voicemetronome
+        mkdir -p app/src/main/res/values
+        mkdir -p app/src/main/res/layout
+        mkdir -p app/src/main/res/drawable
+
+        cat << 'EOF' > settings.gradle
+        pluginManagement {
+            repositories {
+                google()
+                mavenCentral()
+                gradlePluginPortal()
+            }
+        }
+        dependencyResolutionManagement {
+            repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+            repositories {
+                google()
+                mavenCentral()
+            }
+        }
+        rootProject.name = "VoiceMetronome"
+        include ':app'
+        EOF
+
+        cat << 'EOF' > build.gradle
+        plugins {
+            id 'com.android.application' version '7.4.2' apply false
+        }
+        EOF
+
+        cat << 'EOF' > gradle.properties
+        android.useAndroidX=true
+        android.enableJetifier=true
+        org.gradle.jvmargs=-Xmx2048m
+        EOF
+
+        cat << 'EOF' > app/build.gradle
+        plugins {
+            id 'com.android.application'
+        }
+        android {
+            namespace 'com.example.voicemetronome'
+            compileSdk 33
+            defaultConfig {
+                applicationId "com.example.voicemetronome"
+                minSdk 18
+                targetSdk 33
+                versionCode 1
+                versionName "1.0"
+            }
+            buildTypes {
+                release {
+                    minifyEnabled false
+                    proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+                }
+            }
+            compileOptions {
+                sourceCompatibility JavaVersion.VERSION_1_8
+                targetCompatibility JavaVersion.VERSION_1_8
+            }
+        }
+        dependencies {
+            implementation 'androidx.appcompat:appcompat:1.6.1'
+        }
+        EOF
+
+        touch app/proguard-rules.pro
+
+        cat << 'EOF' > app/src/main/AndroidManifest.xml
+        <?xml version="1.0" encoding="utf-8"?>
+        <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+            <application
+                android:allowBackup="true"
+                android:icon="@drawable/ic_launcher"
+                android:label="中文节拍器"
+                android:theme="@style/Theme.AppCompat.NoActionBar">
+                <activity
+                    android:name=".MainActivity"
+                    android:exported="true"
+                    android:screenOrientation="portrait">
+                    <intent-filter>
+                        <action android:name="android.intent.action.MAIN" />
+                        <category android:name="android.intent.category.LAUNCHER" />
+                    </intent-filter>
+                </activity>
+            </application>
+        </manifest>
+        EOF
+
+        cat << 'EOF' > app/src/main/res/values/strings.xml
+        <resources>
+            <string name="app_name">中文节拍器</string>
+        </resources>
+        EOF
+
+        cat << 'EOF' > app/src/main/res/drawable/ic_launcher.xml
+        <vector xmlns:android="http://schemas.android.com/apk/res/android"
+            android:width="48dp"
+            android:height="48dp"
+            android:viewportWidth="48"
+            android:viewportHeight="48">
+            <path android:fillColor="#4CAF50" android:pathData="M0,0h48v48h-48z"/>
+            <path android:fillColor="#FFFFFF" android:pathData="M22,12h4v24h-4z"/>
+            <path android:fillColor="#FFFFFF" android:pathData="M14,20h4v16h-4z"/>
+            <path android:fillColor="#FFFFFF" android:pathData="M30,20h4v16h-4z"/>
+        </vector>
+        EOF
+
+        cat << 'EOF' > app/src/main/res/layout/activity_main.xml
+        <?xml version="1.0" encoding="utf-8"?>
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="16dp"
+            android:background="#1A1A1A">
+            <TextView
+                android:id="@+id/tv_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#888888"
+                android:textSize="14sp"
+                android:text="正在初始化语音..." />
+            <TextView
+                android:id="@+id/tv_beat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFF"
+                android:textSize="96sp"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp"
+                android:text="-" />
+            <TextView
+                android:id="@+id/tv_bpm"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#CCCCCC"
+                android:textSize="24sp"
+                android:layout_marginTop="8dp"
+                android:text="速度: 80 BPM" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="16dp">
+                <Button
+                    android:id="@+id/btn_bpm_down"
+                    android:layout_width="0dp"
+                    android:layout_height="64dp"
+                    android:layout_weight="1"
+                    android:text="-"
+                    android:textSize="24sp"
+                    android:layout_marginEnd="8dp" />
+                <Button
+                    android:id="@+id/btn_bpm_up"
+                    android:layout_width="0dp"
+                    android:layout_height="64dp"
+                    android:layout_weight="1"
+                    android:text="+"
+                    android:textSize="24sp"
+                    android:layout_marginStart="8dp" />
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="16dp">
+                <Button
+                    android:id="@+id/btn_2"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_weight="1"
+                    android:text="2/4"
+                    android:textSize="18sp"
+                    android:layout_marginEnd="6dp" />
+                <Button
+                    android:id="@+id/btn_3"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_weight="1"
+                    android:text="3/4"
+                    android:textSize="18sp"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="6dp" />
+                <Button
+                    android:id="@+id/btn_4"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_weight="1"
+                    android:text="4/4"
+                    android:textSize="18sp"
+                    android:layout_marginStart="6dp" />
+            </LinearLayout>
+            <Button
+                android:id="@+id/btn_start_stop"
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:layout_marginTop="24dp"
+                android:text="开始"
+                android:textSize="28sp" />
+        </LinearLayout>
+        EOF
+
+        cat << 'EOF' > app/src/main/java/com/example/voicemetronome/MainActivity.java
+        package com.example.voicemetronome;
+
+        import android.media.AudioAttributes;
+        import android.media.SoundPool;
+        import android.os.Build;
+        import android.os.Bundle;
+        import android.os.Handler;
+        import android.os.Looper;
+        import android.speech.tts.TextToSpeech;
+        import android.speech.tts.UtteranceProgressListener;
+        import android.view.WindowManager;
+        import android.widget.Button;
+        import android.widget.TextView;
+        import android.widget.Toast;
+
+        import androidx.appcompat.app.AppCompatActivity;
+
+        import java.io.File;
+        import java.util.HashMap;
+        import java.util.Locale;
+
+        public class MainActivity extends AppCompatActivity {
+
+            private TextToSpeech tts;
+            private SoundPool soundPool;
+            private final int[] soundIds = new int[4];
+            private boolean soundReady = false;
+            private boolean ttsReady = false;
+
+            private boolean isPlaying = false;
+            private int bpm = 80;
+            private int beatsPerBar = 4;
+            private int currentBeat = 0;
+
+            private final Handler handler = new Handler(Looper.getMainLooper());
+            private Runnable beatRunnable;
+
+            private TextView tvBpm, tvBeat, tvStatus;
+            private Button btnStartStop, btnBpmUp, btnBpmDown, btn2, btn3, btn4;
+
+            private File ttsDir;
+
+            @Override
+            protected void onCreate(Bundle savedInstanceState) {
+                super.onCreate(savedInstanceState);
+                setContentView(R.layout.activity_main);
+                getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+                tvBpm = findViewById(R.id.tv_bpm);
+                tvBeat = findViewById(R.id.tv_beat);
+                tvStatus = findViewById(R.id.tv_status);
+                btnStartStop = findViewById(R.id.btn_start_stop);
+                btnBpmUp = findViewById(R.id.btn_bpm_up);
+                btnBpmDown = findViewById(R.id.btn_bpm_down);
+                btn2 = findViewById(R.id.btn_2);
+                btn3 = findViewById(R.id.btn_3);
+                btn4 = findViewById(R.id.btn_4);
+
+                ttsDir = new File(getCacheDir(), "tts");
+                if (!ttsDir.exists()) ttsDir.mkdirs();
+
+                initTts();
+                initSoundPool();
+
+                btnStartStop.setOnClickListener(v -> togglePlay());
+                btnBpmUp.setOnClickListener(v -> { if (bpm < 208) { bpm++; updateUI(); } });
+                btnBpmDown.setOnClickListener(v -> { if (bpm > 40) { bpm--; updateUI(); } });
+                btn2.setOnClickListener(v -> setBeats(2));
+                btn3.setOnClickListener(v -> setBeats(3));
+                btn4.setOnClickListener(v -> setBeats(4));
+
+                updateUI();
+                tvStatus.setText("正在初始化语音...");
+            }
+
+            private void initTts() {
+                tts = new TextToSpeech(this, status -> {
+                    if (status == TextToSpeech.SUCCESS) {
+                        int result = tts.setLanguage(Locale.CHINA);
+                        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                            Toast.makeText(this, "系统缺少中文语音引擎，请安装中文TTS", Toast.LENGTH_LONG).show();
+                            tvStatus.setText("缺少中文TTS");
+                            return;
+                        }
+                        ttsReady = true;
+                        synthesizeNumbers();
+                    } else {
+                        Toast.makeText(this, "TTS初始化失败", Toast.LENGTH_LONG).show();
+                        tvStatus.setText("TTS初始化失败");
+                    }
+                });
+            }
+
+            private void initSoundPool() {
+                AudioAttributes attrs = new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build();
+                soundPool = new SoundPool.Builder()
+                        .setMaxStreams(4)
+                        .setAudioAttributes(attrs)
+                        .build();
+            }
+
+            private void synthesizeNumbers() {
+                String[] nums = {"一", "二", "三", "四"};
+                for (int i = 0; i < 4; i++) {
+                    File f = new File(ttsDir, "num" + i + ".wav");
+                    if (f.exists()) {
+                        loadSound(i, f);
+                        continue;
+                    }
+                    String utteranceId = "tts_" + i;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        tts.synthesizeToFile(nums[i], null, f, utteranceId);
+                    } else {
+                        HashMap<String, String> params = new HashMap<>();
+                        params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, utteranceId);
+                        tts.synthesizeToFile(nums[i], params, f.getAbsolutePath());
+                    }
+                }
+
+                tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                    @Override
+                    public void onStart(String utteranceId) {}
+
+                    @Override
+                    public void onDone(String utteranceId) {
+                        if (utteranceId == null || !utteranceId.startsWith("tts_")) return;
+                        int index = Integer.parseInt(utteranceId.replace("tts_", ""));
+                        File f = new File(ttsDir, "num" + index + ".wav");
+                        runOnUiThread(() -> loadSound(index, f));
+                    }
+
+                    @Override
+                    public void onError(String utteranceId) {
+                        runOnUiThread(() -> tvStatus.setText("语音合成失败"));
+                    }
+                });
+            }
+
+            private void loadSound(int index, File f) {
+                if (f.exists()) {
+                    soundIds[index] = soundPool.load(f.getAbsolutePath(), 1);
+                    soundPool.setOnLoadCompleteListener((pool, sampleId, status) -> {
+                        if (status == 0) {
+                            soundReady = true;
+                            runOnUiThread(() -> tvStatus.setText("就绪"));
+                        }
+                    });
+                }
+            }
+
+            private void setBeats(int beats) {
+                beatsPerBar = beats;
+                currentBeat = 0;
+                updateUI();
+            }
+
+            private void togglePlay() {
+                if (isPlaying) {
+                    stopMetronome();
+                } else {
+                    startMetronome();
+                }
+            }
+
+            private void startMetronome() {
+                if (!ttsReady || !soundReady) {
+                    Toast.makeText(this, "还在初始化，请稍等", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                isPlaying = true;
+                currentBeat = 0;
+                btnStartStop.setText("停止");
+                tvStatus.setText("播放中");
+                scheduleBeat();
+            }
+
+            private void stopMetronome() {
+                isPlaying = false;
+                handler.removeCallbacks(beatRunnable);
+                btnStartStop.setText("开始");
+                tvStatus.setText("已停止");
+                tvBeat.setText("-");
+            }
+
+            private void scheduleBeat() {
+                if (!isPlaying) return;
+
+                int beatToPlay = currentBeat;
+                if (soundIds[beatToPlay] != 0) {
+                    soundPool.play(soundIds[beatToPlay], 1.0f, 1.0f, 1, 0, 1.0f);
+                }
+                tvBeat.setText(String.valueOf(beatToPlay + 1));
+
+                currentBeat = (currentBeat + 1) % beatsPerBar;
+
+                long interval = 60000L / bpm;
+                beatRunnable = this::scheduleBeat;
+                handler.postDelayed(beatRunnable, interval);
+            }
+
+            private void updateUI() {
+                tvBpm.setText("速度: " + bpm + " BPM");
+                tvBeat.setText("-");
+                btn2.setSelected(beatsPerBar == 2);
+                btn3.setSelected(beatsPerBar == 3);
+                btn4.setSelected(beatsPerBar == 4);
+            }
+
+            @Override
+            protected void onDestroy() {
+                super.onDestroy();
+                if (tts != null) {
+                    tts.stop();
+                    tts.shutdown();
+                }
+                if (soundPool != null) {
+                    soundPool.release();
+                }
+                handler.removeCallbacksAndMessages(null);
+            }
+        }
+        EOF
+
+    - name: Build Debug APK
+      run: gradle assembleDebug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug
+        path: app/build/outputs/apk/debug/app-debug.apk
